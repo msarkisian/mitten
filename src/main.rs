@@ -7,7 +7,7 @@ use std::{
 #[macro_use]
 extern crate lazy_static;
 
-const GLOVE_PATH: &str = "./glove.840B.300d.txt";
+const GLOVE_PATH: &str = "./datasets/glove.pruned.300d.txt";
 
 lazy_static! {
     static ref WORD_VECS: HashMap<String, [f64; 300]> = load_word_vectors();
@@ -34,7 +34,7 @@ impl Ord for ScoredWord {
 impl Eq for ScoredWord {}
 
 fn main() {
-    find_closest_words("rust")
+    find_closest_words("coffee")
         .into_iter_sorted()
         .take(50)
         .for_each(|w| println!("{}: {}", w.word, w.score))

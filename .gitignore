@@ -1,3 +1,2 @@
 /target
-glove.*
-words.txt
+/datasets/glove*
