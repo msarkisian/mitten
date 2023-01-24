@@ -4,6 +4,7 @@ use rayon::prelude::*;
 use std::{
     collections::{BinaryHeap, HashMap},
     fs::read_to_string,
+    io,
 };
 
 #[macro_use]
@@ -36,10 +37,14 @@ impl Ord for ScoredWord {
 impl Eq for ScoredWord {}
 
 fn main() {
-    find_closest_words("peach")
-        .into_iter_sorted()
-        .take(50)
-        .for_each(|w| println!("{}: {}", w.word, w.score))
+    loop {
+        let mut word = String::new();
+        io::stdin().read_line(&mut word).unwrap();
+        find_closest_words(&word.trim())
+            .into_iter_sorted()
+            .take(50)
+            .for_each(|w| println!("{}: {}", w.word, w.score))
+    }
 }
 
 fn load_word_vectors() -> HashMap<String, [f64; 300]> {
