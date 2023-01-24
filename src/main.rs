@@ -1,9 +1,11 @@
 #![feature(binary_heap_into_iter_sorted)]
 
+use rayon::prelude::*;
 use std::{
     collections::{BinaryHeap, HashMap},
     fs::read_to_string,
 };
+
 #[macro_use]
 extern crate lazy_static;
 
@@ -64,7 +66,7 @@ fn get_vector(target: &str) -> Option<&[f64; 300]> {
 fn find_closest_words(target: &str) -> BinaryHeap<ScoredWord> {
     let this_word_vec = get_vector(&target).expect("target word not in dataset");
     WORD_VECS
-        .iter()
+        .par_iter()
         .map(|(word, vec)| ScoredWord {
             word,
             score: dot_product(this_word_vec, vec),
