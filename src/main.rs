@@ -40,10 +40,14 @@ fn main() {
     loop {
         let mut word = String::new();
         io::stdin().read_line(&mut word).unwrap();
-        find_closest_words(&word.trim())
-            .into_iter_sorted()
-            .take(50)
-            .for_each(|w| println!("{}: {}", w.word, w.score))
+        if let Some(closest_words) = find_closest_words(&word.trim()) {
+            closest_words
+                .into_iter_sorted()
+                .take(50)
+                .for_each(|w| println!("{}: {}", w.word, w.score));
+            continue;
+        }
+        eprintln!("provided word not in dataset")
     }
 }
 
@@ -68,15 +72,17 @@ fn get_vector(target: &str) -> Option<&[f64; 300]> {
     WORD_VECS.get(target)
 }
 
-fn find_closest_words(target: &str) -> BinaryHeap<ScoredWord> {
-    let this_word_vec = get_vector(&target).expect("target word not in dataset");
-    WORD_VECS
-        .par_iter()
-        .map(|(word, vec)| ScoredWord {
-            word,
-            score: dot_product(this_word_vec, vec),
-        })
-        .collect()
+fn find_closest_words(target: &str) -> Option<BinaryHeap<ScoredWord>> {
+    let this_word_vec = get_vector(&target)?;
+    Some(
+        WORD_VECS
+            .par_iter()
+            .map(|(word, vec)| ScoredWord {
+                word,
+                score: dot_product(this_word_vec, vec),
+            })
+            .collect(),
+    )
 }
 
 fn dot_product<const S: usize>(a: &[f64; S], b: &[f64; S]) -> f64 {
