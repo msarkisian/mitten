@@ -21,3 +21,27 @@ fn get_vector(target: &str) -> Option<[f64; 300]> {
     }
     None
 }
+
+fn dot_product<const S: usize>(a: &[f64; S], b: &[f64; S]) -> f64 {
+    a.iter()
+        .zip(b.iter())
+        .map(|(a, b)| a * b)
+        .fold(0f64, |acc, prod| acc + prod)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn dot_product_test() {
+        assert_eq!(
+            dot_product(&[1f64, 3f64, -5f64], &[4f64, -2f64, -1f64]),
+            3f64
+        );
+        assert_eq!(
+            dot_product(&[1f64, 3f64, -5f64], &[1f64, 3f64, -5f64]),
+            35f64
+        );
+    }
+}
