@@ -34,7 +34,7 @@ impl Ord for ScoredWord {
 impl Eq for ScoredWord {}
 
 fn main() {
-    find_closest_words("persimmon")
+    find_closest_words("peach")
         .into_iter_sorted()
         .take(50)
         .for_each(|w| println!("{}: {}", w.word, w.score))
@@ -63,15 +63,13 @@ fn get_vector(target: &str) -> Option<&[f64; 300]> {
 
 fn find_closest_words(target: &str) -> BinaryHeap<ScoredWord> {
     let this_word_vec = get_vector(&target).expect("target word not in dataset");
-    let mut word_heap = BinaryHeap::new();
-
-    for (word, vec) in WORD_VECS.iter() {
-        word_heap.push(ScoredWord {
+    WORD_VECS
+        .iter()
+        .map(|(word, vec)| ScoredWord {
             word,
             score: dot_product(this_word_vec, vec),
         })
-    }
-    word_heap
+        .collect()
 }
 
 fn dot_product<const S: usize>(a: &[f64; S], b: &[f64; S]) -> f64 {
