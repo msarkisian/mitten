@@ -1,10 +1,21 @@
 #![feature(binary_heap_into_iter_sorted)]
 
-use std::{collections::BinaryHeap, fs::read_to_string};
+use std::{
+    collections::{BinaryHeap, HashMap},
+    fs::read_to_string,
+};
+#[macro_use]
+extern crate lazy_static;
+
+const GLOVE_PATH: &str = "./glove.840B.300d.txt";
+
+lazy_static! {
+    static ref WORD_VECS: HashMap<String, [f64; 300]> = load_word_vectors();
+}
 
 #[derive(PartialEq)]
 struct ScoredWord {
-    word: String,
+    word: &'static str,
     score: f64,
 }
 
@@ -23,47 +34,42 @@ impl Ord for ScoredWord {
 impl Eq for ScoredWord {}
 
 fn main() {
-    find_closest_words("cat")
+    find_closest_words("rust")
         .into_iter_sorted()
-        .take(20)
+        .take(50)
         .for_each(|w| println!("{}: {}", w.word, w.score))
 }
 
-fn get_vector(target: &str) -> Option<[f64; 300]> {
-    let words = read_to_string("./glove.840B.300d.txt").unwrap();
-
+fn load_word_vectors() -> HashMap<String, [f64; 300]> {
+    let words = read_to_string(GLOVE_PATH).unwrap();
+    let mut word_vectors = HashMap::new();
     for line in words.lines() {
         let mut tokens = line.split(' ');
         let word = tokens.next().unwrap();
-        if word == target {
-            let mut word_vec = [0f64; 300];
-            for (i, token) in tokens.enumerate() {
-                word_vec[i] = token.parse::<f64>().unwrap();
-            }
-            println!("{:?}", word_vec);
-            return Some(word_vec);
+
+        let mut word_vec = [0f64; 300];
+        for (i, token) in tokens.enumerate() {
+            word_vec[i] = token.parse::<f64>().unwrap();
         }
+
+        word_vectors.insert(word.to_string(), word_vec);
     }
-    None
+    word_vectors
+}
+
+fn get_vector(target: &str) -> Option<&[f64; 300]> {
+    WORD_VECS.get(target)
 }
 
 fn find_closest_words(target: &str) -> BinaryHeap<ScoredWord> {
     let this_word_vec = get_vector(&target).unwrap();
     let mut word_heap = BinaryHeap::new();
 
-    let words = read_to_string("./glove.840B.300d.txt").unwrap();
-
-    for line in words.lines() {
-        let mut tokens = line.split(' ');
-        let word = tokens.next().unwrap();
-        let mut word_vec = [0f64; 300];
-        for (i, token) in tokens.enumerate() {
-            word_vec[i] = token.parse::<f64>().unwrap();
-        }
+    for (word, vec) in WORD_VECS.iter() {
         word_heap.push(ScoredWord {
-            word: word.to_string(),
-            score: dot_product(&this_word_vec, &word_vec),
-        });
+            word,
+            score: dot_product(this_word_vec, vec),
+        })
     }
     word_heap
 }
@@ -95,27 +101,27 @@ mod test {
     fn heap_ordering() {
         let mut heap = BinaryHeap::new();
         heap.push(ScoredWord {
-            word: "a".to_string(),
+            word: "a",
             score: 0f64,
         });
         heap.push(ScoredWord {
-            word: "b".to_string(),
+            word: "b",
             score: 5f64,
         });
         heap.push(ScoredWord {
-            word: "c".to_string(),
+            word: "c",
             score: 2f64,
         });
         heap.push(ScoredWord {
-            word: "d".to_string(),
+            word: "d",
             score: 9f64,
         });
         heap.push(ScoredWord {
-            word: "e".to_string(),
+            word: "e",
             score: 0.030000540530,
         });
         heap.push(ScoredWord {
-            word: "f".to_string(),
+            word: "f",
             score: -0.030000540530,
         });
 
