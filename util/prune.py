@@ -6,7 +6,7 @@ output = open("glove.pruned.300d.txt", "w", encoding="utf-8")
 print(word_list)
 
 for line in glove_unpruned:
-    if (line.split()[0] in word_list):
+    if (line.split()[0] in word_list and len(line.split()) == 301):
         output.writelines(line)
 
 glove_unpruned.close()
