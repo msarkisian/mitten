@@ -33,6 +33,13 @@ impl Ord for ScoredWord {
 
 impl Eq for ScoredWord {}
 
+pub enum WordOp {
+    Addition,
+    Subtraction,
+}
+
+pub struct WordArithmeticOps<'a>(pub &'a str, pub WordOp);
+
 fn load_word_vectors<P: AsRef<Path>>(path: P) -> HashMap<String, [f64; 300]> {
     let words = read_to_string(path).unwrap();
     let mut word_vectors = HashMap::new();
@@ -56,15 +63,29 @@ fn get_vector(target: &str) -> Option<&[f64; 300]> {
 
 pub fn find_closest_words(target: &str) -> Option<BinaryHeap<ScoredWord>> {
     let this_word_vec = get_vector(&target)?;
-    Some(
-        WORD_VECS
-            .par_iter()
-            .map(|(word, vec)| ScoredWord {
-                word,
-                score: dot_product(this_word_vec, vec),
-            })
-            .collect(),
-    )
+    Some(find_closest_words_from_vec(this_word_vec))
+}
+
+fn find_closest_words_from_vec(input: &[f64; 300]) -> BinaryHeap<ScoredWord> {
+    WORD_VECS
+        .par_iter()
+        .map(|(word, vec)| ScoredWord {
+            word,
+            score: dot_product(input, vec),
+        })
+        .collect()
+}
+
+pub fn word_arithmetic(initial: &str, ops: &[WordArithmeticOps]) -> Option<&'static str> {
+    let mut word_vec = get_vector(initial)?.clone();
+    for WordArithmeticOps(word, op) in ops {
+        let op_word_vec = get_vector(word)?;
+        match op {
+            WordOp::Addition => word_vec = add_vecs(&word_vec, &op_word_vec),
+            WordOp::Subtraction => word_vec = sub_vecs(&word_vec, &op_word_vec),
+        }
+    }
+    Some(closest_word_from_vec(&word_vec))
 }
 
 fn dot_product<const S: usize>(a: &[f64; S], b: &[f64; S]) -> f64 {
@@ -72,6 +93,30 @@ fn dot_product<const S: usize>(a: &[f64; S], b: &[f64; S]) -> f64 {
         .zip(b.iter())
         .map(|(a, b)| a * b)
         .fold(0f64, |acc, prod| acc + prod)
+}
+
+fn add_vecs<const S: usize>(a: &[f64; S], b: &[f64; S]) -> [f64; S] {
+    let mut arr = [0f64; S];
+    for i in 0..S {
+        arr[i] = a[i] + b[i]
+    }
+    arr
+}
+
+fn sub_vecs<const S: usize>(a: &[f64; S], b: &[f64; S]) -> [f64; S] {
+    let mut arr = [0f64; S];
+    for i in 0..S {
+        arr[i] = a[i] - b[i]
+    }
+    arr
+}
+
+pub fn closest_word(word: &str) -> &'static str {
+    find_closest_words(&word).unwrap().pop().unwrap().word
+}
+
+fn closest_word_from_vec(input: &[f64; 300]) -> &'static str {
+    find_closest_words_from_vec(input).pop().unwrap().word
 }
 
 #[cfg(test)]
