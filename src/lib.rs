@@ -13,7 +13,7 @@ lazy_static! {
     static ref WORD_VECS: HashMap<String, [f64; 300]> = load_word_vectors(GLOVE_PATH);
 }
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct ScoredWord {
     pub word: &'static str,
     pub score: f64,
@@ -57,16 +57,16 @@ fn load_word_vectors<P: AsRef<Path>>(path: P) -> HashMap<String, [f64; 300]> {
     word_vectors
 }
 
-fn get_vector(target: &str) -> Option<&[f64; 300]> {
+fn get_vector_from_word(target: &str) -> Option<&[f64; 300]> {
     WORD_VECS.get(target)
 }
 
-pub fn find_closest_words(target: &str) -> Option<BinaryHeap<ScoredWord>> {
-    let this_word_vec = get_vector(&target)?;
-    Some(find_closest_words_from_vec(this_word_vec))
+pub fn calculate_word_distance_from_word(target: &str) -> Option<BinaryHeap<ScoredWord>> {
+    let this_word_vec = get_vector_from_word(&target)?;
+    Some(calculate_word_distance_from_vec(this_word_vec))
 }
 
-fn find_closest_words_from_vec(input: &[f64; 300]) -> BinaryHeap<ScoredWord> {
+fn calculate_word_distance_from_vec(input: &[f64; 300]) -> BinaryHeap<ScoredWord> {
     WORD_VECS
         .par_iter()
         .map(|(word, vec)| ScoredWord {
@@ -77,15 +77,15 @@ fn find_closest_words_from_vec(input: &[f64; 300]) -> BinaryHeap<ScoredWord> {
 }
 
 pub fn word_arithmetic(initial: &str, ops: &[WordArithmeticOps]) -> Option<&'static str> {
-    let mut word_vec = get_vector(initial)?.clone();
+    let mut word_vec = get_vector_from_word(initial)?.clone();
     for WordArithmeticOps(word, op) in ops {
-        let op_word_vec = get_vector(word)?;
+        let op_word_vec = get_vector_from_word(word)?;
         match op {
             WordOp::Addition => word_vec = add_vecs(&word_vec, &op_word_vec),
             WordOp::Subtraction => word_vec = sub_vecs(&word_vec, &op_word_vec),
         }
     }
-    Some(closest_word_from_vec(&word_vec))
+    Some(closest_word_to_vec(&word_vec))
 }
 
 fn dot_product<const S: usize>(a: &[f64; S], b: &[f64; S]) -> f64 {
@@ -111,12 +111,16 @@ fn sub_vecs<const S: usize>(a: &[f64; S], b: &[f64; S]) -> [f64; S] {
     arr
 }
 
-pub fn closest_word(word: &str) -> &'static str {
-    find_closest_words(&word).unwrap().pop().unwrap().word
+pub fn closest_word_to_word(word: &str) -> &'static str {
+    calculate_word_distance_from_word(&word)
+        .unwrap()
+        .pop()
+        .unwrap()
+        .word
 }
 
-fn closest_word_from_vec(input: &[f64; 300]) -> &'static str {
-    find_closest_words_from_vec(input).pop().unwrap().word
+fn closest_word_to_vec(input: &[f64; 300]) -> &'static str {
+    calculate_word_distance_from_vec(input).pop().unwrap().word
 }
 
 #[cfg(test)]
