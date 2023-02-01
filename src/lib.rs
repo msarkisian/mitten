@@ -1,6 +1,9 @@
 #![feature(binary_heap_into_iter_sorted)]
 
 pub mod context;
+use context::Contexto;
+use rand;
+use rand::seq::IteratorRandom;
 use rayon::prelude::*;
 use std::{
     collections::{BinaryHeap, HashMap},
@@ -124,6 +127,11 @@ pub fn closest_word_to_word(word: &str) -> &'static str {
 
 fn closest_word_to_vec(input: &[f64; 300]) -> &'static str {
     calculate_word_distance_from_vec(input).pop().unwrap().word
+}
+
+pub fn random_contexto() -> Contexto {
+    let mut rng = rand::thread_rng();
+    Contexto::new(WORD_VECS.keys().choose(&mut rng).unwrap())
 }
 
 #[cfg(test)]
