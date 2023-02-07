@@ -27,6 +27,9 @@ pub struct ScoredWord {
 
 impl PartialOrd for ScoredWord {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        if self.score.is_nan() || other.score.is_nan() {
+            panic!("NaN in word score")
+        }
         self.score.partial_cmp(&other.score)
     }
 }
