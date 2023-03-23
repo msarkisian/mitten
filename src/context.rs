@@ -14,15 +14,17 @@ pub enum GuessResult {
 
 impl Contexto {
     pub fn new(word: &'static str) -> Self {
+        let mut rankings_heap = calculate_word_distance_from_word(word).unwrap();
+        let mut rankings_map = HashMap::with_capacity(rankings_heap.len());
+
+        let mut idx = 1usize;
+        while let Some(word) = rankings_heap.pop() {
+            rankings_map.insert(word.word, idx);
+            idx += 1;
+        }
         Self {
             word,
-            rankings: calculate_word_distance_from_word(word)
-                .unwrap()
-                .into_iter_sorted()
-                .map(|w| w.word)
-                .filter(|w| *w != word)
-                .zip(1..)
-                .collect(),
+            rankings: rankings_map,
         }
     }
 

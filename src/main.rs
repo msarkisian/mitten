@@ -1,5 +1,3 @@
-#![feature(binary_heap_into_iter_sorted)]
-
 use mitten::{self, context::GuessResult, random_contexto};
 use std::{io, process};
 

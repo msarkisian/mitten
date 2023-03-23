@@ -1,5 +1,3 @@
-#![feature(binary_heap_into_iter_sorted)]
-
 pub mod context;
 use context::Contexto;
 use rand;
